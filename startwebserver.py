@@ -12,10 +12,12 @@ address = ('', 80)
 plantSensors = PlantSensors(30, 1, 1, '/dev/ttyACM0')
 
 def makeLine():
+    date = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime())
     moistures = ""
     for idx, val in enumerate(plantSensors.moisture):
         moistures += "Moisture" + str(idx) + "=" + str(val) + " "
-    return '{0}Temp={1} Press={2} Humid={3} Light={4}'.format(
+    return '{0} {1}Temp={2} Press={3} Humid={4} Light={5}'.format(
+        date,
         moistures,
         plantSensors.temperature,
         plantSensors.pressure,
