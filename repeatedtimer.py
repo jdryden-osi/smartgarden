@@ -1,3 +1,6 @@
+# Thanks to MestreLion on stackoverflow
+# https://stackoverflow.com/a/13151299
+
 from threading import Timer
 
 class RepeatedTimer(object):

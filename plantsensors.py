@@ -9,7 +9,7 @@ if sys.version_info[0] < 3:
 
 
 class PlantSensors(object):
-    def __init__(self, port='/dev/ttyACM0'):
+    def __init__(self, moistureInterval=3600, tempInterval=5, lightInterval=5, port='/dev/ttyACM0'):
         self.arduino = Arduino(port)
         self.moisture = None
         self.temperature = None
@@ -17,9 +17,9 @@ class PlantSensors(object):
         self.humidity = None
         self.light = None
         
-        self.lightInterval = 5
-        self.tempInterval = 5
-        self.moistureInterval = 30
+        self.lightInterval = lightInterval
+        self.tempInterval = tempInterval
+        self.moistureInterval = moistureInterval
         self.lastTempScan = None
         self.lastLightScan = None
         self.lastMoistureScan = None
@@ -86,7 +86,7 @@ class PlantSensors(object):
         rawVal = self.arduino.getMoisture().split(',')
         vals = [0] * len(rawVal)
         for idx, val in enumerate(rawVal):
-            vals[idx] = PlantSensors.tryParseFloat(val)
+            vals[idx] = PlantSensors.tryParseInt(val)
         self.moisture = vals
 
     def printAll(self):
@@ -101,6 +101,13 @@ class PlantSensors(object):
     def tryParseFloat(strVal):
         try:
             return float(strVal)
+        except:
+            return 'ReadFailed'
+
+    @staticmethod
+    def tryParseInt(strVal):
+        try:
+            return int(strVal)
         except:
             return 'ReadFailed'
     
