@@ -3,26 +3,26 @@ import time
 import glob
 import sys
 import threading
-from plantsensors import PlantSensors
+from smartgarden import SmartGarden
 
 if sys.version_info[0] < 3:
     raise Exception("Must be using Python 3")
 
 address = ('', 80)
-plantSensors = PlantSensors(30, 1, 1, '/dev/ttyACM0')
+smartgarden = SmartGarden(port='/dev/ttyACM0', moisture_scan=1800, temp_scan=1, light_scan=1)
 
 def make_line():
     date = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime())
     moistures = ""
-    for idx, val in enumerate(plantSensors.moisture):
+    for idx, val in enumerate(smartgarden.moisture):
         moistures += "Moisture" + str(idx) + "=" + str(val) + " "
     return '{0} {1}Temp={2} Press={3} Humid={4} Light={5}'.format(
         date,
         moistures,
-        plantSensors.temperature,
-        plantSensors.pressure,
-        plantSensors.humidity,
-        plantSensors.light
+        smartgarden.temperature,
+        smartgarden.pressure,
+        smartgarden.humidity,
+        smartgarden.light
     )
 
 class WebHandler(http.server.BaseHTTPRequestHandler):
@@ -47,5 +47,6 @@ if __name__ == '__main__':
     except KeyboardInterrupt:
         print('Closing Socket.')
         webserver.socket.close()
+        smartgarden.stop()
         exit()
 

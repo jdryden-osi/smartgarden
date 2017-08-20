@@ -7,7 +7,7 @@ if sys.version_info[0] < 3:
     raise Exception("Must be using Python 3")
 
 
-class PlantSensors(object):
+class SmartGarden(object):
     def __init__(self, port='/dev/ttyACM0', moisture_scan=3600, temp_scan=5, light_scan=5, autostart=True):
         # Scan intervals in seconds
         self.light_scan = light_scan
@@ -68,9 +68,9 @@ class PlantSensors(object):
             self.pressure = 'Unavailable'
             self.humidity = 'Unavailable'
         elif len(rawVal) == 3:
-            self.temperature = PlantSensors.try_parse_float(rawVal[0])
-            self.pressure = PlantSensors.try_parse_float(rawVal[1])
-            self.humidity = PlantSensors.try_parse_float(rawVal[2])
+            self.temperature = SmartGarden.try_parse_float(rawVal[0])
+            self.pressure = SmartGarden.try_parse_float(rawVal[1])
+            self.humidity = SmartGarden.try_parse_float(rawVal[2])
         else:
             # Should only get here if response is malformed
             self.temperature = 'ReadFailed'
@@ -86,7 +86,7 @@ class PlantSensors(object):
         if rawVal == 'Unavailable':
             self.light = 'Unavailable'
         else:
-            self.light = PlantSensors.try_parse_float(rawVal)
+            self.light = SmartGarden.try_parse_float(rawVal)
 
     def update_moisture(self, scanTime=None):
         # Number of moisture readings is determined by Arduino sketch
@@ -98,7 +98,7 @@ class PlantSensors(object):
         rawVal = self.arduino.get_moisture().split(',')
         vals = [0] * len(rawVal)
         for idx, val in enumerate(rawVal):
-            vals[idx] = PlantSensors.try_parse_int(val)
+            vals[idx] = SmartGarden.try_parse_int(val)
         self.moisture = vals
 
     def print_all(self):
@@ -125,7 +125,7 @@ class PlantSensors(object):
     
 
 if __name__ == '__main__':
-    p = PlantSensors()
+    p = SmartGarden()
     try:
         while True:
             p.print_all()
