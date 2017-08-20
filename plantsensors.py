@@ -1,6 +1,5 @@
 import time
 import sys
-import threading
 from arduino import Arduino
 from repeatedtimer import RepeatedTimer
 
@@ -9,32 +8,42 @@ if sys.version_info[0] < 3:
 
 
 class PlantSensors(object):
-    def __init__(self, moisture_scan=3600, temp_scan=5, light_scan=5, port='/dev/ttyACM0'):
-        self.arduino = Arduino(port)
+    def __init__(self, port='/dev/ttyACM0', moisture_scan=3600, temp_scan=5, light_scan=5, autostart=True):
+        # Scan intervals in seconds
+        self.light_scan = light_scan
+        self.temp_scan = temp_scan
+        self.moisture_scan = moisture_scan
+        
+        # Sensor reading variables
         self.moisture = None
         self.temperature = None
         self.pressure = None
         self.humidity = None
         self.light = None
         
-        self.light_scan = light_scan
-        self.temp_scan = temp_scan
-        self.moisture_scan = moisture_scan
+        # Last scan times for each sensor type
         self.temp_last_scan = None
         self.light_last_scan = None
         self.moisture_last_scan = None
-        self.serial_busy = False
-
+        
+        # Connect to Arduino and get initial sensor readings
+        self.arduino = Arduino(port)
         self.update_temperature()
         self.update_light()
         self.update_moisture()
+        
+        # Create/start timer to update readings in the background
+        self.serial_busy = False
+        self.update_timer = RepeatedTimer(1, self.on_scan, autostart)
 
-        self.updateTimer = RepeatedTimer(1, self.on_scan)
+    def start(self):
+        self.update_timer.start()
 
     def stop(self):
-        self.updateTimer.stop()
+        self.update_timer.stop()
 
     def on_scan(self):
+        # Only run if another thread is not currently using serial comms
         if not self.serial_busy:
             self.serial_busy = True
             now = time.time()
@@ -63,6 +72,7 @@ class PlantSensors(object):
             self.pressure = PlantSensors.try_parse_float(rawVal[1])
             self.humidity = PlantSensors.try_parse_float(rawVal[2])
         else:
+            # Should only get here if response is malformed
             self.temperature = 'ReadFailed'
             self.pressure = 'ReadFailed'
             self.humidity = 'ReadFailed'
@@ -79,6 +89,8 @@ class PlantSensors(object):
             self.light = PlantSensors.try_parse_float(rawVal)
 
     def update_moisture(self, scanTime=None):
+        # Number of moisture readings is determined by Arduino sketch
+        # Parse all that arrive into array in self.moisture
         if scanTime:
             self.moisture_last_scan = scanTime
         else:
@@ -111,7 +123,6 @@ class PlantSensors(object):
         except:
             return 'ReadFailed'
     
-
 
 if __name__ == '__main__':
     p = PlantSensors()
