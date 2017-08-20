@@ -11,7 +11,7 @@ if sys.version_info[0] < 3:
 address = ('', 80)
 plantSensors = PlantSensors(30, 1, 1, '/dev/ttyACM0')
 
-def makeLine():
+def make_line():
     date = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime())
     moistures = ""
     for idx, val in enumerate(plantSensors.moisture):
@@ -36,7 +36,7 @@ class WebHandler(http.server.BaseHTTPRequestHandler):
         self.end_headers()
         self.wfile.write(bytes("<html><head><title>PlantPi01</title></head>",'utf-8'))
         self.wfile.write(bytes("<body><p>",'utf-8'))
-        self.wfile.write(bytes(makeLine(),'utf-8'))
+        self.wfile.write(bytes(make_line(),'utf-8'))
         self.wfile.write(bytes("</p></body></html>",'utf-8'))
 
 

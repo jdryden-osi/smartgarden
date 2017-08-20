@@ -10,10 +10,10 @@ class Arduino:
 		self._con = serial.Serial(port, 9600)
 		self._con.setTimeout(10)
 		output = ""
-		initLines = 0
-		while (output != "Ready!" and initLines < 5):
+		init_lines = 0
+		while (output != "Ready!" and init_lines < 5):
 			output = self.readline()
-			initLines += 1
+			init_lines += 1
 		if (output != "Ready!"):
 			raise Exception("Cannot connect to Arduino at " + port)
 		# sleep 5 seconds to let sensors stabilize
@@ -22,15 +22,15 @@ class Arduino:
 	def readline(self):
 		return str(self._con.readline().decode().replace('\r\n',''))
 	
-	def getMoisture(self):
+	def get_moisture(self):
 		self._con.write(b'M')
 		return self.readline()
 
-	def getLight(self):
+	def get_light(self):
 		self._con.write(b'L')
 		return self.readline()
 
-	def getTemp(self):
+	def get_temperature(self):
 		self._con.write(b'T')
 		return self.readline()
 
@@ -44,7 +44,7 @@ if __name__ == '__main__':
 	a = Arduino()
 	print("Connected.")
 
-	print("Light: " + a.getLight())
-	print("Temp/Press/Humid: " + a.getTemp())
-	print("Moisture: " + a.getMoisture())
+	print("Light: " + a.get_light())
+	print("Temp/Press/Humid: " + a.get_temperature())
+	print("Moisture: " + a.get_moisture())
 	a.close()
