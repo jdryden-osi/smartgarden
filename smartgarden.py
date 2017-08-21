@@ -10,21 +10,23 @@ if sys.version_info[0] < 3:
 class SmartGarden(object):
     def __init__(self, port='/dev/ttyACM0', moisture_scan=3600, temp_scan=5, light_scan=5, autostart=True):
         # Scan intervals in seconds
+        # Set to 0 or negative value to disable scan for that sensor type
         self.light_scan = light_scan
         self.temp_scan = temp_scan
         self.moisture_scan = moisture_scan
         
         # Sensor reading variables
-        self.moisture = None
-        self.temperature = None
-        self.pressure = None
-        self.humidity = None
-        self.light = None
+        # Initialized to 'Disabled', will be overwritten if enabled
+        self.moisture = 'Disabled'
+        self.temperature = 'Disabled'
+        self.pressure = 'Disabled'
+        self.humidity = 'Disabled'
+        self.light = 'Disabled'
         
         # Last scan times for each sensor type
-        self.temp_last_scan = None
-        self.light_last_scan = None
-        self.moisture_last_scan = None
+        self.temp_last_scan = 0
+        self.light_last_scan = 0
+        self.moisture_last_scan = 0
         
         # Connect to Arduino and get initial sensor readings
         self.arduino = Arduino(port)
@@ -33,6 +35,7 @@ class SmartGarden(object):
         self.update_moisture()
         
         # Create/start timer to update readings in the background
+        # Timer runs every second, but scans are only performed if scan time has elapsed
         self.serial_busy = False
         self.update_timer = RepeatedTimer(1, self.on_scan, autostart)
 
@@ -57,49 +60,52 @@ class SmartGarden(object):
             finally:
                 self.serial_busy = False
 
-    def update_temperature(self, scanTime=None):
-        if scanTime:
-            self.temp_last_scan = scanTime
-        else:
-            self.temp_last_scan = time.time()
-        rawVal = self.arduino.get_temperature().split(',')
-        if rawVal == ['Unavailable']:
-            self.temperature = 'Unavailable'
-            self.pressure = 'Unavailable'
-            self.humidity = 'Unavailable'
-        elif len(rawVal) == 3:
-            self.temperature = SmartGarden.try_parse_float(rawVal[0])
-            self.pressure = SmartGarden.try_parse_float(rawVal[1])
-            self.humidity = SmartGarden.try_parse_float(rawVal[2])
-        else:
-            # Should only get here if response is malformed
-            self.temperature = 'ReadFailed'
-            self.pressure = 'ReadFailed'
-            self.humidity = 'ReadFailed'
+    def update_temperature(self, scan_time=None):
+        if self.temp_scan > 0:
+            if scan_time:
+                self.temp_last_scan = scan_time
+            else:
+                self.temp_last_scan = time.time()
+            rawVal = self.arduino.get_temperature().split(',')
+            if rawVal == ['Unavailable']:
+                self.temperature = 'Unavailable'
+                self.pressure = 'Unavailable'
+                self.humidity = 'Unavailable'
+            elif len(rawVal) == 3:
+                self.temperature = SmartGarden.try_parse_float(rawVal[0])
+                self.pressure = SmartGarden.try_parse_float(rawVal[1])
+                self.humidity = SmartGarden.try_parse_float(rawVal[2])
+            else:
+                # Should only get here if response is malformed
+                self.temperature = 'ReadFailed'
+                self.pressure = 'ReadFailed'
+                self.humidity = 'ReadFailed'
 
-    def update_light(self, scanTime=None):
-        if scanTime:
-            self.light_last_scan = scanTime
-        else:
-            self.light_last_scan = time.time()
-        rawVal = self.arduino.get_light()
-        if rawVal == 'Unavailable':
-            self.light = 'Unavailable'
-        else:
-            self.light = SmartGarden.try_parse_float(rawVal)
+    def update_light(self, scan_time=None):
+        if self.light_scan > 0:
+            if scan_time:
+                self.light_last_scan = scan_time
+            else:
+                self.light_last_scan = time.time()
+            rawVal = self.arduino.get_light()
+            if rawVal == 'Unavailable':
+                self.light = 'Unavailable'
+            else:
+                self.light = SmartGarden.try_parse_float(rawVal)
 
-    def update_moisture(self, scanTime=None):
+    def update_moisture(self, scan_time=None):
         # Number of moisture readings is determined by Arduino sketch
         # Parse all that arrive into array in self.moisture
-        if scanTime:
-            self.moisture_last_scan = scanTime
-        else:
-            self.moisture_last_scan = time.time()
-        rawVal = self.arduino.get_moisture().split(',')
-        vals = [0] * len(rawVal)
-        for idx, val in enumerate(rawVal):
-            vals[idx] = SmartGarden.try_parse_int(val)
-        self.moisture = vals
+        if self.moisture_scan > 0:
+            if scan_time:
+                self.moisture_last_scan = scan_time
+            else:
+                self.moisture_last_scan = time.time()
+            rawVal = self.arduino.get_moisture().split(',')
+            vals = [0] * len(rawVal)
+            for idx, val in enumerate(rawVal):
+                vals[idx] = SmartGarden.try_parse_int(val)
+            self.moisture = vals
 
     def print_all(self):
         for idx, val in enumerate(self.moisture):
