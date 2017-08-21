@@ -15,6 +15,9 @@ int moisturePins[] = {A0, A1, A2};
 int moisturePowerNumPins = 1;
 int moisturePowerPins[] = {2};
 
+// Use pin 13 so the onboard LED mirrors the lampControlPin state
+int lampControlPin = 13;
+
 // *********************************************
 // Initialize the temperature, humidity, and pressure sensor.
 // Sensor board: BME280
@@ -135,6 +138,8 @@ void setup() {
   initBME280();
   initTSL2561();
   initMoisture();
+  pinMode(lampControlPin, OUTPUT);
+  digitalWrite(lampControlPin, LOW);
 
   Serial.println("Ready!");
 }
@@ -158,9 +163,14 @@ void loop() {
         //Serial.println("Temp");
         printTemp();
         break;
+      case '1':
+        //Serial.println("Lamp On");
+        digitalWrite(lampControlPin, HIGH);
+        break;
+      case '0':
+        //Serial.println("Lamp Off");
+        digitalWrite(lampControlPin, LOW);
+        break;
     }
-    
-
   }
-  
 }

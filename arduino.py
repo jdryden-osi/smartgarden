@@ -33,6 +33,12 @@ class Arduino:
 	def get_temperature(self):
 		self._con.write(b'T')
 		return self.readline()
+	
+	def set_lamp_on(self):
+		self._con.write(b'1')
+	
+	def set_lamp_off(self):
+		self._con.write(b'0')
 
 	def close(self):
 		self._con.close()
